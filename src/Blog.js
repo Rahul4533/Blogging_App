@@ -12,6 +12,7 @@ export default function Blog(){
         setBlogs([{title:formData.title,content:formData.content},...blogs]);
         console.log( blogs);
         setFormData({title:"",content:""});
+        
     }
 
     function remove(i){
@@ -60,7 +61,7 @@ export default function Blog(){
               <div className="blog-btn">
                 <button className="btn remove"  onClick={()=>remove(i)}>Delete</button>
               </div>
-
+              <button>Next</button>
             </div>
         ))}
         
