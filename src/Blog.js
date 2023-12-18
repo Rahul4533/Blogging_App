@@ -1,20 +1,42 @@
-import { useState,useRef, useEffect } from "react";
+import { useState,useRef, useEffect, useReducer } from "react";
 
+import {db} from "./firebaseinit";
+import { collection,addDoc } from "firebase/firestore";
+
+function blogsReducer(state,action){
+switch(action.type){
+    case "Add":
+        return [action.blogs,...state];
+
+    case "remove":
+        return state.filter((blog,index)=> index!== action.index) ;   
+
+        default:
+            return [];
+}
+}
 //Blogging App using Hooks
 export default function Blog(){
 
     const [formData,setFormData]=useState({title:"",content:""});
-    const [blogs,setBlogs]=useState([]);
+      const [blogs,dispatch]=useReducer(blogsReducer,[]);
     const titleRef=useRef(null);
     
     //Passing the synthetic event as argument to stop refreshing the page on submit
-    function handleSubmit(e){
+   async function handleSubmit(e){
         e.preventDefault();
-        setBlogs([{title:formData.title,content:formData.content},...blogs]);
+        //setBlogs([{title:formData.title,content:formData.content},...blogs]);
+        dispatch({type:"Add",blogs:{title:formData.title,content:formData.content}});
         console.log( blogs);
-        setFormData({title:"",content:""});
         titleRef.current.focus();
-        document.title=formData.title;
+
+        await addDoc(collection(db,'blogs'),{
+           title: formData.title,
+           content: formData.content,
+           createdon: new Date(),
+        })
+        setFormData({title:"",content:""});
+    
         
     }
 
@@ -22,8 +44,17 @@ export default function Blog(){
         titleRef.current.focus();
     },[])
 
+    useEffect(()=>{
+        if(blogs.length){
+            document.title=blogs[0].title;
+        }else{
+            document.title="No Blogs!!";
+        }
+    },[blogs]);
+
     function remove(i){
-       setBlogs(blogs.filter((blog,index)=>i!==index));
+      // setBlogs(blogs.filter((blog,index)=>i!==index));
+       dispatch({type:"remove",index:i});
       
     }
 
