@@ -1,36 +1,45 @@
-import { useState,useRef, useEffect, useReducer } from "react";
+import { useState,useRef, useEffect } from "react";
 
 import {db} from "./firebaseinit";
-import { collection,addDoc } from "firebase/firestore";
+import { collection,addDoc ,getDocs} from "firebase/firestore";
 
-function blogsReducer(state,action){
-switch(action.type){
-    case "Add":
-        return [action.blogs,...state];
 
-    case "remove":
-        return state.filter((blog,index)=> index!== action.index) ;   
 
-        default:
-            return [];
-}
-}
 //Blogging App using Hooks
 export default function Blog(){
 
     const [formData,setFormData]=useState({title:"",content:""});
-      const [blogs,dispatch]=useReducer(blogsReducer,[]);
+      const [blogs,setBlogs]=useState([]);
     const titleRef=useRef(null);
+
+    useEffect(()=>{
+        async function getBlogs() {
+            const citiesCol = collection(db, 'blogs');
+            const citySnapshot = await getDocs(citiesCol);
+            const blogs = citySnapshot.docs.map((doc) => {
+                return{
+                id: doc.id,
+                ...doc.data()
+                }
+
+            });
+             setBlogs(blogs)
+
+        }
+        getBlogs();
+    },[])
     
     //Passing the synthetic event as argument to stop refreshing the page on submit
    async function handleSubmit(e){
         e.preventDefault();
         //setBlogs([{title:formData.title,content:formData.content},...blogs]);
-        dispatch({type:"Add",blogs:{title:formData.title,content:formData.content}});
         console.log( blogs);
         titleRef.current.focus();
+         
 
-        await addDoc(collection(db,'blogs'),{
+        const addblogs= collection(db,"blogs");
+        
+        await addDoc(addblogs,{
            title: formData.title,
            content: formData.content,
            createdon: new Date(),
@@ -53,8 +62,8 @@ export default function Blog(){
     },[blogs]);
 
     function remove(i){
-      // setBlogs(blogs.filter((blog,index)=>i!==index));
-       dispatch({type:"remove",index:i});
+    setBlogs(blogs.filter((blog,index)=>blog!==index));
+         
       
     }
 
